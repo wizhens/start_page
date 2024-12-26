@@ -149,7 +149,7 @@
                 @click="openApp(app.domain)"
                 @click.right.prevent="openEditModal(app, index)"
               >
-                <img :src="getIcon(app.icon, app.domain)" :alt="app.name" class="shadow-md w-12 h-12 rounded-lg mx-auto"/>
+                <img :src="getIcon(app.icon, app.domain)" :alt="app.name" class="w-12 h-12 rounded-lg mx-auto"/>
                 <p class="mt-2">{{ app.name }}</p>
               </li>
               <!-- アプリ追加ボタン -->
@@ -259,21 +259,21 @@
         template: `
           <div v-if="show" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center">
             <div class="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
-              <h2 class="text-lg font-bold mb-4">{{ editMode ? 'アプリを編集' : '新しいアプリを追加' }}</h2>
-              <div class="mb-4">
-                <label class="block text-sm font-medium">名前</label>
+              <h2 class="text-lg font-bold mb-4 text-gray-700">{{ editMode ? 'アプリを編集' : '新しいアプリを追加' }}</h2>
+              <div class="mb-4 text-gray-700">
+                <label class="block text-sm font-medium text-gray-700">名前</label>
                 <input v-model="form.name" type="text" class="border rounded w-full p-2" placeholder="アプリ名"/>
               </div>
-              <div class="mb-4">
-                <label class="block text-sm font-medium">ドメイン/URL</label>
+              <div class="mb-4 text-gray-700">
+                <label class="block text-sm font-medium text-gray-700">ドメイン/URL</label>
                 <input v-model="form.domain" type="text" class="border rounded w-full p-2" placeholder="https://example.com"/>
               </div>
-              <div class="mb-4">
-                <label class="block text-sm font-medium">アイコンURL (任意)</label>
+              <div class="mb-4 text-gray-700">
+                <label class="block text-sm font-medium text-gray-700">アイコンURL (任意)</label>
                 <input v-model="form.icon" type="text" class="border rounded w-full p-2" placeholder="https://example.com/icon.png"/>
               </div>
               <div class="flex justify-end space-x-2">
-                <button @click="close" class="px-4 py-2 bg-gray-300 rounded">キャンセル</button>
+                <button @click="close" class="px-4 py-2 bg-gray-300 rounded text-gray-700">キャンセル</button>
                 <button @click="save" class="px-4 py-2 bg-blue-500  rounded">{{ editMode ? '保存' : '追加' }}</button>
                 <button v-if="editMode" @click="deleteApp" class="px-4 py-2 bg-red-500  rounded">削除</button>
               </div>
