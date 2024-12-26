@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- reset.css destyle -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/destyle.css@1.0.15/destyle.css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      ::-webkit-scrollbar {
+        display: none;
+      }
+
+      #apps {
+        grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+      }
+      @media (max-width: 768px) {
+        #apps {
+          grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+        }
+      }
+      .ghost {
+        opacity: 0.5;
+      }
+    </style>
+    <title>MyStartPage!!</title>
+  </head>
+  <body class="text-white">
+    <div
+      id="app"
+      class="w-full h-screen flex flex-col bg-gradient-to-br from-emerald-500 to-emerald-900"
+    >
+      <header
+        class="flex w-4/5 items-center justify-between mx-auto py-16 flex-col gap-8"
+      >
+        <clock></clock>
+        <google-search></google-search>
+      </header>
+      <main class="w-full flex-1 flex flex-col">
+        <app-grid></app-grid>
+        <dock></dock>
+      </main>
+    </div>
+
+    <script>
+      const App = {};
+      const app = Vue.createApp(App);
+      // 時計コンポーネント
+      app.component("clock", {
+        template: `
+        <div class="">
+          <div class="font-bold text-sm text-center">{{ date }}</div>
+          <div class="font-bold text-[52px] text-center leading-[52px]">{{ time }}</div>
+        </div>
+      `,
+        data() {
+          return {
+            date: "ーー",
+            time: "ーー",
+          };
+        },
+        methods: {
+          updateTime() {
+            const now = new Date();
+            this.date = `${now.getFullYear()}/${(now.getMonth() + 1)
+              .toString()
+              .padStart(2, "0")}/${now.getDate().toString().padStart(2, "0")}`;
+            this.time = `${now.getHours().toString().padStart(2, "0")}:${now
+              .getMinutes()
+              .toString()
+              .padStart(2, "0")}`;
+          },
+        },
+        mounted() {
+          this.updateTime(); // 初期表示を更新
+          this.timer = setInterval(this.updateTime, 1000); // 1秒ごとに更新
+        },
+        beforeUnmount() {
+          clearInterval(this.timer); // コンポーネント破棄時にタイマーを解除
+        },
+      });
+      // 検索フォームコンポーネント
+      app.component("google-search", {
+        template: `
+          <form
+          action="https://www.google.com/search"
+          method="get"
+          class="w-full max-w-[600px]"
+        >
+          <input
+            type="text"
+            autocomplete="off"
+            name="q"
+            placeholder="Search on Google"
+            class="bg-[#00000010] px-4 py-3 rounded-full  w-full"
+          />
+        </form>
+        `,
+      });
+
+      // グリッドアイテムコンポーネント
+      app.component("app-grid-item", {
+        template: `
+        <li
+          class="app cursor-pointer mx-auto text-xs  text-center"
+          draggable="true"
+          @click="openApp(app.domain)"
+        >
+          <img :src="getIcon(app.icon, app.domain)" :alt="app.name" class="w-12 h-12 rounded-lg mx-auto"/>
+          <p class="mt-2">{{ app.name }}</p>
+        </li>
+      `,
+        props: ["app"],
+        methods: {
+          // アイコンが設定されていない場合、Googleのfaviconサービスから取得する
+          getIcon(icon, domain) {
+            if (icon) {
+              return icon;
+            }
+            // アイコンが設定されていない場合、Googleのサービスでファビコンを取得
+            return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+          },
+          openApp(url) {
+            window.open(url);
+          },
+        },
+      });
+
+      // アプリのグリッドを管理するコンポーネント
+      app.component("app-grid", {
+        template: `
+          <div class="flex-1">
+            <!-- アプリ一覧のグリッド -->
+            <ul
+              id="apps"
+              ref="appList"
+              class="grid w-full gap-y-6 max-w-[1080px] mx-auto place-content-center"
+            >
+              <li
+                v-for="(app, index) in apps"
+                :key="app.name"
+                class="app cursor-pointer mx-auto text-xs  text-center"
+                draggable="true"
+                @click="openApp(app.domain)"
+                @click.right.prevent="openEditModal(app, index)"
+              >
+                <img :src="getIcon(app.icon, app.domain)" :alt="app.name" class="shadow-md w-12 h-12 rounded-lg mx-auto"/>
+                <p class="mt-2">{{ app.name }}</p>
+              </li>
+              <!-- アプリ追加ボタン -->
+              <li
+                class="w-12 h-12 bg-[#00000010] mx-auto rounded-full relative cursor-pointer"
+                @click="openAddModal"
+              >
+                <span class="w-[3px] h-6 rounded-full bg-gray-400 block absolute  left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2"></span>
+                <span class="w-6 h-[3px] rounded-full bg-gray-400 block absolute  left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2"></span>
+              </li>
+            </ul>
+
+            <!-- モーダルウィンドウ -->
+            <app-modal
+              :show="isModalOpen"
+              :editApp="currentApp"
+              @close="closeModal"
+              @save="saveApp"
+              @delete="deleteApp"
+            ></app-modal>
+          </div>
+        `,
+        data() {
+          return {
+            apps: JSON.parse(localStorage.getItem("apps")) || [],
+            isModalOpen: false,
+            currentApp: null,
+            currentIndex: null,
+          };
+        },
+        mounted() {
+          const appList = this.$refs.appList;
+          new Sortable(appList, {
+            animation: 150,
+            onEnd: (event) => {
+              this.updateOrder(event);
+              const item = event.item;
+              // ドラッグ中のアイテムが透明にならないようにする
+              item.style.opacity = "1"; // 半透明を無効に
+            },
+            onStart(event) {
+              event.from.style.opacity = "1";
+              const item = event.item;
+              // ドラッグ中のアイテムが透明にならないようにする
+              item.style.opacity = "0"; // 半透明を無効に
+            },
+            ghostClass: "ghost",
+            chosenClass: "chosen",
+          });
+        },
+        methods: {
+          openAddModal() {
+            this.currentApp = null;
+            this.isModalOpen = true;
+          },
+          openEditModal(app, index) {
+            this.currentApp = app;
+            this.currentIndex = index;
+            this.isModalOpen = true;
+          },
+          closeModal() {
+            this.isModalOpen = false;
+            this.currentApp = null;
+            this.currentIndex = null;
+          },
+          saveApp(newApp) {
+            if (this.currentIndex !== null) {
+              // アプリの編集
+              this.apps.splice(this.currentIndex, 1, newApp);
+            } else {
+              // 新しいアプリを追加
+              if (!newApp.name || !newApp.domain) return;
+              this.apps.push(newApp);
+            }
+            this.updateLocalStorage();
+          },
+          deleteApp() {
+            if (this.currentIndex !== null) {
+              this.apps.splice(this.currentIndex, 1); // アプリをリストから削除
+              this.updateLocalStorage();
+              this.closeModal();
+            }
+          },
+          updateOrder(event) {
+            const orderedApps = this.apps;
+            const movedItem = orderedApps.splice(event.oldIndex, 1)[0];
+            orderedApps.splice(event.newIndex, 0, movedItem);
+            this.apps = orderedApps;
+            this.updateLocalStorage();
+          },
+          updateLocalStorage() {
+            localStorage.setItem("apps", JSON.stringify(this.apps));
+          },
+          openApp(url) {
+            window.open(url);
+          },
+          getIcon(icon, domain) {
+            return (
+              icon ||
+              `https://www.google.com/s2/favicons?domain=${domain}&sz=128`
+            );
+          },
+        },
+      });
+
+      app.component("app-modal", {
+        template: `
+          <div v-if="show" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center">
+            <div class="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
+              <h2 class="text-lg font-bold mb-4">{{ editMode ? 'アプリを編集' : '新しいアプリを追加' }}</h2>
+              <div class="mb-4">
+                <label class="block text-sm font-medium">名前</label>
+                <input v-model="form.name" type="text" class="border rounded w-full p-2" placeholder="アプリ名"/>
+              </div>
+              <div class="mb-4">
+                <label class="block text-sm font-medium">ドメイン/URL</label>
+                <input v-model="form.domain" type="text" class="border rounded w-full p-2" placeholder="https://example.com"/>
+              </div>
+              <div class="mb-4">
+                <label class="block text-sm font-medium">アイコンURL (任意)</label>
+                <input v-model="form.icon" type="text" class="border rounded w-full p-2" placeholder="https://example.com/icon.png"/>
+              </div>
+              <div class="flex justify-end space-x-2">
+                <button @click="close" class="px-4 py-2 bg-gray-300 rounded">キャンセル</button>
+                <button @click="save" class="px-4 py-2 bg-blue-500  rounded">{{ editMode ? '保存' : '追加' }}</button>
+                <button v-if="editMode" @click="deleteApp" class="px-4 py-2 bg-red-500  rounded">削除</button>
+              </div>
+            </div>
+          </div>
+        `,
+        props: ["show", "editApp"],
+        emits: ["close", "save", "delete"],
+        data() {
+          return {
+            form: {
+              name: "",
+              domain: "",
+              icon: "",
+            },
+            editMode: false,
+          };
+        },
+        watch: {
+          editApp(newApp) {
+            if (newApp) {
+              this.form = { ...newApp };
+              this.editMode = true;
+            } else {
+              this.form = { name: "", domain: "", icon: "" };
+              this.editMode = false;
+            }
+          },
+        },
+        methods: {
+          close() {
+            this.$emit("close");
+          },
+          save() {
+            this.$emit("save", { ...this.form });
+            this.close();
+          },
+          deleteApp() {
+            this.$emit("delete");
+            this.close();
+          },
+        },
+      });
+
+      app.component("dock", {
+        template: `
+        <div class="px-4">
+          <ul
+            id="dock"
+            ref="dockList"
+            class="flex overflow-x-scroll h-24 bg-[#00000010] mx-auto w-full max-w-[1080px] rounded-xl mx-auto mb-8 items-center justify-center"
+            @wheel="handleScroll($event)"
+            >
+            <li
+              v-for="(dock, index) in dock"
+              :key="dock.name"
+              class="w-24 shrink-0  text-center text-xs cursor-pointer"
+              draggable="true"
+              @click="openDoc(dock.domain)"
+            >
+              <img
+                :src="dock.icon"
+                :alt="dock.name"
+                class="w-12 h-12 mx-auto"
+              />
+              <p>{{ dock.name }}</p>
+            </li>
+          </ul>
+        </div>
+        `,
+        data() {
+          return {
+            dock: JSON.parse(localStorage.getItem("dock")) || [
+              {
+                name: "Gmail",
+                domain: "https://mail.google.com/mail/",
+                icon: "https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico",
+              },
+              {
+                name: "Drive",
+                domain: "https://drive.google.com/",
+                icon: "https://ssl.gstatic.com/images/branding/product/1x/drive_2020q4_48dp.png",
+              },
+              {
+                name: "Calendar",
+                domain: "https://calendar.google.com/",
+                icon: "https://upload.wikimedia.org/wikipedia/commons/a/a5/Google_Calendar_icon_%282020%29.svg",
+              },
+              {
+                name: "Photos",
+                domain: "https://photos.google.com/",
+                icon: "https://ssl.gstatic.com/images/branding/product/1x/photos_64dp.png",
+              },
+              {
+                name: "Maps",
+                domain: "https://maps.google.com/",
+                icon: "https://ssl.gstatic.com/images/branding/product/1x/maps_48dp.png",
+              },
+              {
+                name: "Docs",
+                domain: "https://docs.google.com/",
+                icon: "https://ssl.gstatic.com/docs/documents/images/kix-favicon7.ico",
+              },
+              {
+                name: "Sheets",
+                domain: "https://sheets.google.com/",
+                icon: "sheet.png",
+              },
+              {
+                name: "Keep",
+                domain: "https://keep.google.com/",
+                icon: "https://ssl.gstatic.com/images/branding/product/1x/keep_48dp.png",
+              },
+            ],
+          };
+        },
+        mounted() {
+          const dockList = this.$refs.dockList;
+          new Sortable(dockList, {
+            animation: 150,
+            onEnd: (event) => {
+              this.updateOrder(event);
+              const item = event.item;
+              // ドラッグ中のアイテムが透明にならないようにする
+              item.style.opacity = "1"; // 半透明を無効に
+            },
+            onStart(event) {
+              event.from.style.opacity = "1";
+              const item = event.item;
+              // ドラッグ中のアイテムが透明にならないようにする
+              item.style.opacity = "0"; // 半透明を無効に
+            },
+          });
+        },
+        methods: {
+          updateOrder(event) {
+            const reordereddock = [...this.dock];
+            const movedItem = reordereddock.splice(event.oldIndex, 1)[0];
+            reordereddock.splice(event.newIndex, 0, movedItem);
+            this.dock = reordereddock;
+            localStorage.setItem("dock", JSON.stringify(this.dock));
+          },
+          handleScroll(event) {
+            this.$refs.dockList.scrollLeft += event.deltaY;
+          },
+        },
+      });
+
+      app.mount("#app");
+    </script>
+  </body>
+</html>
