@@ -31,10 +31,7 @@
     <title>MyStartPage!!</title>
   </head>
   <body class="text-white">
-    <div
-      id="app"
-      class="w-full h-screen flex flex-col bg-[url(bg.jpg)]"
-    >
+    <div id="app" class="w-full h-screen flex flex-col bg-[url(bg.jpg)]">
       <header
         class="flex w-4/5 items-center justify-between mx-auto py-16 flex-col gap-8"
       >
@@ -97,7 +94,7 @@
             autocomplete="off"
             name="q"
             placeholder="Search on Google"
-            class="bg-[#00000010] px-4 py-3 rounded-full  w-full"
+            class="bg-[#00000025] px-4 py-3 rounded-full  w-full placeholder:text-gray-200 placeholder:text-center"
           />
         </form>
         `,
@@ -154,11 +151,11 @@
               </li>
               <!-- アプリ追加ボタン -->
               <li
-                class="w-12 h-12 bg-[#00000010] mx-auto rounded-full relative cursor-pointer"
+                class="w-12 h-12 bg-[#00000025] mx-auto rounded-full relative cursor-pointer"
                 @click="openAddModal"
               >
-                <span class="w-[3px] h-6 rounded-full bg-gray-400 block absolute  left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2"></span>
-                <span class="w-6 h-[3px] rounded-full bg-gray-400 block absolute  left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2"></span>
+                <span class="w-[3px] h-6 rounded-full bg-gray-200 block absolute  left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2"></span>
+                <span class="w-6 h-[3px] rounded-full bg-gray-200 block absolute  left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2"></span>
               </li>
             </ul>
 
@@ -324,7 +321,7 @@
           <ul
             id="dock"
             ref="dockList"
-            class="flex overflow-x-scroll h-24 bg-[#00000010] mx-auto w-full max-w-[1080px] rounded-xl mx-auto mb-8 items-center justify-center"
+            class="flex overflow-x-scroll h-24 bg-[#00000025] mx-auto w-full max-w-[1080px] rounded-xl mx-auto mb-8 items-center justify-center"
             @wheel="handleScroll($event)"
             >
             <li
@@ -418,6 +415,9 @@
           },
           handleScroll(event) {
             this.$refs.dockList.scrollLeft += event.deltaY;
+          },
+          openDoc(domain) {
+            window.open(domain, "_blank");
           },
         },
       });
